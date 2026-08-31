@@ -1,0 +1,95 @@
+# Default training configuration for WiMAE and ContraWiMAE with OptimizedPreloadedDataset
+
+# Model configuration
+model:
+  type: "wimae"  # Options: "wimae", "contrawimae"
+  patch_size: [16, 1]
+  encoder_dim: 64
+  encoder_layers: 12
+  encoder_nhead: 16
+  decoder_layers: 4
+  decoder_nhead: 8
+  mask_ratio: 0.9
+  contrastive_dim: 64
+  temperature: 0.2
+  snr_min: 5.0
+  snr_max: 40.0
+
+# Data configuration
+data:
+  # Data directory containing NPZ files
+  data_dir: "data/pretrain"
+  
+  # Normalization settings
+  normalize: true
+  val_split: 0.1
+  debug_size: null  # Set to a number for debugging (e.g., 1000)
+  
+  # Statistics handling options:
+  # Option 1: Calculate statistics on-the-fly from training data
+  calculate_statistics: true  # Set to true to calculate from data
+  
+  # Option 2: Use pre-computed statistics (used if calculate_statistics=false)
+  statistics:
+    real_mean: 0.021121172234416008
+    real_std: 30.7452392578125
+    imag_mean: -0.01027622725814581
+    imag_std: 30.70543670654297
+  
+  # Data loading approach:
+  # Option 1: Simple approach - all NPZ files in data_dir
+  # (no scenario_split_config needed, uses val_split for random split)
+  
+  # Option 2: Scenario split approach - use file patterns (embedded config)
+  # scenario_split_config:
+  #   train_patterns:
+  #     - "data_[0-6]\.npz"        # Files 0-6 for training
+  #     - "train_.*\.npz"          # Any files starting with "train_"
+  #   val_patterns:
+  #     - "data_[78]\.npz"         # Files 7-8 for validation
+  #     - "val_.*\.npz"            # Any files starting with "val_"
+  #   test_patterns:
+  #     - "data_9\.npz"            # File 9 for testing
+  #     - "test_.*\.npz"           # Any files starting with "test_"
+
+# Training configuration
+training:
+  batch_size: 64
+  epochs: 100
+  num_workers: 4
+  device: "cuda:0"
+  
+  optimizer:
+    type: "adam"
+    lr: 0.0003
+    weight_decay: 0.001
+    betas: [0.9, 0.999]
+  
+  scheduler:
+    type: "cosine"
+    T_max: 3000
+    eta_min: 0.000003
+  
+  loss: "mse"
+  
+  # Early stopping
+  patience: 5
+  min_delta: 0.0001
+  
+  # Loss weights (for contrastive learning)
+  # contrastive_weight is automatically derived as (1 - reconstruction_weight)
+  reconstruction_weight: 0.9
+  
+  # Gradient clipping
+  gradient_clip_val: 1.0
+  
+  # Checkpointing
+  save_checkpoint_every_n: 10
+  save_best_only: true
+
+# Logging configuration
+logging:
+  log_dir: "runs"
+  tensorboard: true
+  log_every_n_steps: 100
+  exp_name: "training_demo"  # Optional: custom experiment name, otherwise uses timestamp 
